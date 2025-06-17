@@ -52,28 +52,29 @@ pipeline {
             }
         }
 
-        stage('Deploy to Minikube') {
-            steps {
-                script {
-                    // Start Minikube if not running
-                    bat 'minikube status || minikube start --driver=docker --force'
-                    
-                    // Deploy to Kubernetes
-                    dir('ShowTime-Book/k8s') {
-                        bat 'kubectl apply -f mysql-deployment.yaml'
-                        bat 'kubectl apply -f deployment.yaml'
-                        bat 'kubectl apply -f services.yaml'
-                    }
-                    
-                    // Wait for deployment to complete
-                    bat 'kubectl rollout status deployment/showtime-app --timeout=300s'
-                    
-                    // Get application URL
-                    bat 'minikube service showtime-service --url'
-                }
+       stage('Deploy to Minikube') {
+    steps {
+        script {
+            bat 'minikube status || minikube start --driver=docker --force'
+            dir('ShowTime-Book/k8s') {
+                bat 'kubectl apply -f mysql-deployment.yaml'
+                bat 'kubectl apply -f deployment.yaml'
+                bat 'kubectl apply -f services.yaml'
             }
+            bat 'kubectl rollout status deployment/showtime-app --timeout=300s'
+
+          
+            bat '''
+                @echo off
+                for /f "tokens=1-4 delims=:/" %%a in ('minikube service showtime-service --url') do (
+                    echo Service is running at: http://%%a:%%b
+                    echo Port: %%b
+                )
+                exit 0
+            '''
         }
     }
+}
     post {
         always {
             bat 'docker logout || true'
