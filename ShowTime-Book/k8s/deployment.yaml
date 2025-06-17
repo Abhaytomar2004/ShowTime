@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: showtime-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: showtime-app
+  template:
+    metadata:
+      labels:
+        app: showtime-app
+    spec:
+      containers:
+      - name: showtime-app
+        image: arnold21/showtime-app:latest 
+        ports:
+        - containerPort: 8081
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://mysql-service:3306/lol3?createDatabaseIfNotExist=true"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "root"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "Anjana@3176"
