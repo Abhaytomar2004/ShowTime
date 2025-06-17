@@ -55,7 +55,7 @@ pipeline {
         stage('Deploy to Minikube') {
             steps {
                 script {
-                     // Start Minikube if not running
+                    // Start Minikube if not running
             bat 'minikube status || minikube start --driver=docker --force'
 
             // Apply Kubernetes manifests
@@ -65,18 +65,16 @@ pipeline {
                 bat 'kubectl apply -f services.yaml'
             }
 
-            // Verify deployment
+            // Wait for rollout
             bat 'kubectl rollout status deployment/showtime-app --timeout=300s'
 
-            // Fetch Minikube IP and NodePort
+            // Fetch and display service URL (no blocking tunnel)
             bat '''
-                set IP=
                 for /f %%i in ('minikube ip') do set IP=%%i
-                for /f "tokens=2" %%a in ('kubectl get svc showtime-service -o=jsonpath="{.spec.ports[0].nodePort}"') do (
+                for /f %%a in ('kubectl get svc showtime-service -o=jsonpath="{.spec.ports[0].nodePort}"') do (
                     echo Service running at http://%IP%:%%a
                 )
             '''
-            
            
                 }
             }
