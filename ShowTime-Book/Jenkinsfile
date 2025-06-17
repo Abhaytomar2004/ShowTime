@@ -55,17 +55,30 @@ pipeline {
         stage('Deploy to Minikube') {
             steps {
                 script {
-                    bat 'minikube status || minikube start --driver=docker --force'
-                    dir('ShowTime-Book/k8s') {
-                        bat 'kubectl apply -f mysql-deployment.yaml'
-                        bat 'kubectl apply -f deployment.yaml'
-                        bat 'kubectl apply -f services.yaml'
-                    }
-                    bat 'kubectl rollout status deployment/showtime-app --timeout=300s'
-
-                    // Get and print service URL (runs in background)
-                  bat 'minikube service showtime-service & exit 0'
-                    '''
+                    // Start Minikube if not running
+            bat 'minikube status || minikube start --driver=docker --force'
+            
+            // Apply Kubernetes manifests
+            dir('ShowTime-Book/k8s') {
+                bat 'kubectl apply -f mysql-deployment.yaml'
+                bat 'kubectl apply -f deployment.yaml'
+                bat 'kubectl apply -f services.yaml'
+            }
+            
+            // Verify deployment
+            bat 'kubectl rollout status deployment/showtime-app --timeout=300s'
+            
+            // Start service (non-blocking) and immediately exit
+            bat 'minikube service showtime-service & exit 0'
+            
+            // Optional: Get URL without blocking (alternative approach)
+            bat '''
+                @echo off
+                for /f "tokens=4 delims=:/" %%a in ('minikube service showtime-service --url --format "http://{{.IP}}:{{.Port}}"') do (
+                    echo Service is running on port: %%a
+                )
+                exit 0
+            '''
                 }
             }
         }
