@@ -67,14 +67,7 @@ pipeline {
 
             // Wait for rollout
             bat 'kubectl rollout status deployment/showtime-app --timeout=300s'
-
-            // Fetch and display service URL (no blocking tunnel)
-            bat '''
-                for /f %%i in ('minikube ip') do set IP=%%i
-                for /f %%a in ('kubectl get svc showtime-service -o=jsonpath="{.spec.ports[0].nodePort}"') do (
-                    echo Service running at http://%IP%:%%a
-                )
-            '''
+                    bat 'kubectl get svc'
            
                 }
             }
