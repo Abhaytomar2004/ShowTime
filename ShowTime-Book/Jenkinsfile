@@ -64,13 +64,7 @@ pipeline {
                     bat 'kubectl rollout status deployment/showtime-app --timeout=300s'
 
                     // Get and print service URL (runs in background)
-                    bat '''
-                        @echo off
-                        for /f "tokens=1-4 delims=:/" %%a in ('minikube service showtime-service --url') do (
-                            echo Service is running at: http://%%a:%%b
-                            echo Port: %%b
-                        )
-                        exit 0
+                  bat 'minikube service showtime-service & exit 0'
                     '''
                 }
             }
