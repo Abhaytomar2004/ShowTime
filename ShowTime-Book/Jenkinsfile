@@ -71,14 +71,7 @@ pipeline {
             // Start service (non-blocking) and immediately exit
             bat 'minikube service showtime-service & exit 0'
             
-            // Optional: Get URL without blocking (alternative approach)
-            bat '''
-                @echo off
-                for /f "tokens=4 delims=:/" %%a in ('minikube service showtime-service --url --format "http://{{.IP}}:{{.Port}}"') do (
-                    echo Service is running on port: %%a
-                )
-                exit 0
-            '''
+           
                 }
             }
         }
