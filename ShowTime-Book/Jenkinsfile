@@ -1,0 +1,82 @@
+pipeline {
+    agent any
+    tools {
+        maven 'Maven 3.9.9'
+        jdk 'JDK-21'
+    }
+    environment {
+        DOCKER_IMAGE = "arnold21/showtime-app:latest"
+        K8S_DIR = "ShowTime-Book/k8s"
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([$class: 'GitSCM', 
+                    branches: [[name: 'JAV-01-feature']],
+                    userRemoteConfigs: [[url: 'https://github.com/Abhaytomar2004/ShowTime.git']],
+                    extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ShowTime']]
+                ])
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir('ShowTime-Book') {
+                    bat 'mvn clean package -DskipTests'
+                }
+            }
+        }
+
+        stage('Docker Build & Push') {
+            steps {
+                dir('ShowTime-Book') {
+                    script {
+                        // Build Docker image
+                        bat "docker build -t ${DOCKER_IMAGE} ."
+                        
+                        // Login to Docker Hub
+                        withCredentials([usernamePassword(
+                            credentialsId: 'docker-hub-credentials',
+                            usernameVariable: 'DOCKER_USER',
+                            passwordVariable: 'DOCKER_TOKEN'
+                        )]) {
+                            bat """
+                                echo %DOCKER_TOKEN% | docker login -u %DOCKER_USER% --password-stdin
+                            """
+                        }
+                        
+                        // Push image
+                        bat "docker push ${DOCKER_IMAGE}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Minikube') {
+            steps {
+                script {
+                    // Start Minikube if not running
+            bat 'minikube status || minikube start --driver=docker --force'
+
+            // Apply Kubernetes manifests
+            dir("${K8S_DIR}") {
+                bat 'kubectl apply -f mysql-deployment.yaml'
+                bat 'kubectl apply -f deployment.yaml'
+                bat 'kubectl apply -f services.yaml'
+            }
+
+            // Wait for rollout
+            bat 'kubectl rollout status deployment/showtime-app --timeout=300s'
+                    bat 'kubectl get svc'
+           
+                }
+            }
+        }
+    }
+    post {
+        always {
+           
+            cleanWs()
+        }
+    }
+}
