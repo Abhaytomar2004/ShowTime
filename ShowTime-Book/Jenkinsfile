@@ -68,8 +68,7 @@ pipeline {
             // Verify deployment
             bat 'kubectl rollout status deployment/showtime-app --timeout=300s'
             
-            // Start service (non-blocking) and immediately exit
-            bat 'minikube service showtime-service & exit 0'
+             bat 'minikube service showtime-service --url'
             
            
                 }
